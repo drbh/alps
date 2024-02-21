@@ -13,7 +13,7 @@ use good_lp::{
 };
 
 mod lib;
-use lib::{UnoptimizedProblem, Variable};
+use lib::{infix_to_postfix, tokenize, UnoptimizedProblem, Variable};
 
 fn create_variables(
     variables: HashMap<String, Variable>,
@@ -163,8 +163,20 @@ fn main() -> Result<(), Box<dyn Error>> {
     ]
   }
 "#;
-    // "expr": "(3-a*3)/(2+5)+1000>=b",
-    // "expression": "10*(a-b/5)-b"
+
+    // parse infix expression into postfix so we can use it to create the good_lp expression
+    {
+        let input_str = "( ( 3 * a ) + b ) * 3".to_string(); // 3 a * b + 3 *
+        let original_tokens = tokenize(&input_str);
+        let result = infix_to_postfix(&original_tokens).unwrap();
+        let postfix_string = result
+            .iter()
+            .map(|x| x.to_string())
+            .collect::<Vec<String>>()
+            .join(" ");
+
+        println!("Postfix {:?}", postfix_string);
+    }
 
     let problem: UnoptimizedProblem = serde_json::from_str(json_problem)?;
     // println!("{:#?}", problem);
