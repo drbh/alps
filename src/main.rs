@@ -120,63 +120,129 @@ fn create_constraints(
 ) -> Vec<constraint::Constraint> {
     let mut constraints = vec![];
     for constraint in problem_constraints {
-        let lhs = *variable_hashmap.get(&constraint.lhs).unwrap();
-        let rhs = *variable_hashmap.get(&constraint.rhs).unwrap();
 
-        let postfix_tokens: Vec<&str> = constraint.expr.split_whitespace().collect();
-        let expression = parse_postfix_expression(postfix_tokens, variable_hashmap);
+        let f = constraint.f.clone();
 
-        let constraint = match constraint.r#type.as_str() {
-            "leq" => good_lp::constraint!(expression <= rhs),
-            "geq" => good_lp::constraint!(expression >= rhs),
-            _ => good_lp::constraint!(lhs == rhs),
-        };
-        constraints.push(constraint);
-    }
-    constraints
-}
+        let inequalities = vec!["<=", ">=", "==", "<", ">"];
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let json_problem = r#"
-{
-    "variables": {
-      "a": {"max": 1},
-      "b": {"min": 2, "max": 10}
-    },
-    "objective": {
-      "goal": "max",
-      "expression": "3 a * b + 3 *"
-    },
-    "constraints": [
-      {
-        "expr": "a -2 *", 
-        "type": "leq", 
-        "lhs": "a", 
-        "rhs": "b"
-      },
-      {
-        "expr": "3 a +", 
-        "type": "geq", 
-        "lhs": "a", 
-        "rhs": "b"
-      }
-    ]
-  }
-"#;
+        // check that f contains an inequality
+        let contains_inequality = inequalities.iter().any(|x| f.contains(x));
+        if !contains_inequality {
+            panic!("Constraint does not contain an inequality");
+        }
 
-    // parse infix expression into postfix so we can use it to create the good_lp expression
-    {
-        let input_str = "( ( 3 * a ) + b ) * 3".to_string(); // 3 a * b + 3 *
-        let original_tokens = tokenize(&input_str);
-        let result = infix_to_postfix(&original_tokens).unwrap();
-        let postfix_string = result
+        // find the inequality that is in the string
+        let my_inequality = inequalities
+            .iter()
+            .find(|x| f.contains(*x))
+            .expect("Failed to find inequality");
+
+        // split on the inequality
+        let split = f.split(my_inequality).collect::<Vec<&str>>();
+
+        let lhs = split[0].trim();
+        let rhs = split[1].trim();
+
+        let lhs_postfix = tokenize(&lhs.to_string());
+        let rhs_postfix = tokenize(&rhs.to_string());
+
+        let lhs_expression = infix_to_postfix(&lhs_postfix).unwrap();
+        let rhs_expression = infix_to_postfix(&rhs_postfix).unwrap();
+
+        let lhs_postfix_string = lhs_expression
             .iter()
             .map(|x| x.to_string())
             .collect::<Vec<String>>()
             .join(" ");
 
-        println!("Postfix {:?}", postfix_string);
+        let rhs_postfix_string = rhs_expression
+            .iter()
+            .map(|x| x.to_string())
+            .collect::<Vec<String>>()
+            .join(" ");
+
+        let lhs_postfix_tokens: Vec<&str> = lhs_postfix_string.split_whitespace().collect();
+        let rhs_postfix_tokens: Vec<&str> = rhs_postfix_string.split_whitespace().collect();
+
+        let lhs_expression = parse_postfix_expression(lhs_postfix_tokens, variable_hashmap);
+        let rhs_expression = parse_postfix_expression(rhs_postfix_tokens, variable_hashmap);
+
+        // use the my_inequality to create the constraint
+        let constraint = match *my_inequality {
+            "<=" => good_lp::constraint!(lhs_expression <= rhs_expression),
+            ">=" => good_lp::constraint!(lhs_expression >= rhs_expression),
+            "==" => good_lp::constraint!(lhs_expression == rhs_expression),
+            // throw an error if the inequality is not supported
+            _ => panic!("Unsupported inequality"),
+        };
+
+        constraints.push(constraint);
     }
+    constraints
+}
+
+fn parse_objective_expression(objective: &String) -> String {
+    // let input_str = "( ( 3 * a ) + b ) * 3".to_string(); // 3 a * b + 3 *
+    let original_tokens = tokenize(&objective);
+    let result = infix_to_postfix(&original_tokens).unwrap();
+    let postfix_string = result
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(" ");
+    println!("Parsed Postfix {:?}", postfix_string);
+    postfix_string
+}
+
+// maximize profits: 3*bagels + 1.25*doughnuts;
+
+// # Constraints;
+// subject to flour: 12*bagels + 6.5*doughnuts <= 400;
+// subject to milk: 1*bagels + .5*doughnuts <= 200;
+// subject to sugar: 2*doughnuts + 0.25*bagels <= 200;
+// subject to bagel_min: bagels >= 12;
+// subject to doughnut_min: doughnuts >= 14;
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let json_problem = r#"
+{
+    "variables": {
+      "a": {
+        "max": 1000000
+      },
+      "b": {
+        "min": 2, 
+        "max": 10000
+      }
+    },
+    "objective": {
+      "goal": "max",
+      "expression": "( 3 * a ) + ( 1.25 * b )"
+    },
+    "constraints": [
+      {
+        "name": "flour",
+        "f": "12 * a + 6.5 * b <= 400"
+      },
+      {
+        "name": "milk",
+        "f": "1 * a + 0.5 * b <= 200"
+      },
+      {
+        "name": "sugar",
+        "f": "2 * a + 0.25 * b <= 200"
+      },
+      {
+        "name": "bagel_min",
+        "f": "a >= 12"
+      },
+      {
+        "name": "doughnut_min",
+        "f": "b >= 14"
+      }
+    ]
+  }
+"#;
 
     let problem: UnoptimizedProblem = serde_json::from_str(json_problem)?;
     // println!("{:#?}", problem);
@@ -185,7 +251,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let (problem_variables, variable_names, variable_hashmap) = create_variables(problem.variables);
     println!("Vars {:#?}", variable_names);
 
-    let expression = create_expression(&problem.objective.expression, &variable_hashmap);
+    let parsed_expression = parse_objective_expression(&problem.objective.expression);
+
+    let expression = create_expression(&parsed_expression, &variable_hashmap);
     println!("Expression {:?}", expression);
 
     // create the constraints
@@ -234,20 +302,16 @@ mod tests {
             },
             "objective": {
               "goal": "max",
-              "expression": "10 b +"
+              "expression": "10 + a - b"
             },
             "constraints": [
               {
-                "expr": "a -2 *",
-                "type": "leq",
-                "lhs": "a",
-                "rhs": "b"
+                "name": "flour",
+                "f": "3 + a >= b"
               },
               {
-                "expr": "3 a +",
-                "type": "geq",
-                "lhs": "a",
-                "rhs": "b"
+                "name": "milk",
+                "f": "3 + a >= b"
               }
             ]
           }
@@ -255,10 +319,82 @@ mod tests {
         let problem: UnoptimizedProblem = serde_json::from_str(json_problem).unwrap();
         let (_problem_variables, _variable_names, variable_hashmap) =
             create_variables(problem.variables);
-        let expression = create_expression(&problem.objective.expression, &variable_hashmap);
-        println!("Expression {:?}", expression);
+
+        let parsed_expression = parse_objective_expression(&problem.objective.expression);
+        let expression = create_expression(&parsed_expression, &variable_hashmap);
         let string_expression = format!("{:?}", expression);
-        assert_eq!(string_expression, "v1 + 10".to_string());
+        println!("string_expression {:?}", string_expression);
+        assert_eq!(string_expression, "-1 v1 + v0 + 10".to_string());
+    }
+
+    #[test]
+    fn test_create_constraint_simple() {
+        let json_problem = r#"
+        {
+            "variables": {
+              "a": {"max": 1},
+              "b": {"min": 2, "max": 10}
+            },
+            "objective": {
+              "goal": "max",
+              "expression": "a + ( -1 * b ) + 5"
+            },
+            "constraints": [
+              {
+                "name": "flour",
+                "f": "3 + a >= b"
+              },
+              {
+                "name": "milk",
+                "f": "6 + a >= b"
+              }
+            ]
+          }
+        "#;
+        let problem: UnoptimizedProblem = serde_json::from_str(json_problem).unwrap();
+        let (_problem_variables, _variable_names, variable_hashmap) =
+            create_variables(problem.variables);
+
+        let parsed_expression = parse_objective_expression(&problem.objective.expression);
+        let expression = create_expression(&parsed_expression, &variable_hashmap);
+        let string_expression = format!("{:?}", expression);
+        println!("string_expression {:?}", string_expression);
+
+        let constraints = create_constraints(&problem.constraints, &variable_hashmap);
+
+        assert_eq!(constraints.len(), 2);
+
+        let mut expected_constraints =
+            vec!["-1 v1 + v0 <= 3".to_string(), "-1 v1 + v0 <= 6".to_string()];
+
+        // TODO: integrate this into the test
+        let mut other_expected_constraints =
+            vec!["-1 v1 + v0 <= 3".to_string(), "-1 v1 + v0 <= 6".to_string()];
+
+        let mut actual_constraints = constraints
+            .iter()
+            .map(|x| format!("{:?}", x))
+            .collect::<Vec<String>>();
+
+        // sort the vectors so that we can compare them
+        expected_constraints.sort();
+        actual_constraints.sort();
+        other_expected_constraints.sort(); // TODO: integrate this into the test
+
+        assert_eq!(actual_constraints, expected_constraints);
+
+        // must match one of the acceptable expressions
+        let acceptable_expressions = vec![
+            "-1 v1 + v0 + 5".to_string(),
+            "v1 + -1 v0 + 5".to_string(),
+            "-1 v1 + v0 + 5".to_string(),
+        ];
+
+        let matched = acceptable_expressions
+            .iter()
+            .any(|x| x == &string_expression);
+
+        assert!(matched);
     }
 
     #[test]
@@ -271,20 +407,16 @@ mod tests {
             },
             "objective": {
               "goal": "max",
-              "expression": "a 2 + b - 3 +"
+              "expression": "a + ( -1 * b ) + 5"
             },
             "constraints": [
               {
-                "expr": "a -2 *", 
-                "type": "leq", 
-                "lhs": "a", 
-                "rhs": "b"
+                "name": "flour",
+                "f": "3 + a >= b"
               },
               {
-                "expr": "3 a +", 
-                "type": "geq", 
-                "lhs": "a", 
-                "rhs": "b"
+                "name": "milk",
+                "f": "6 + a >= b"
               }
             ]
           }
@@ -292,10 +424,10 @@ mod tests {
         let problem: UnoptimizedProblem = serde_json::from_str(json_problem).unwrap();
         let (_problem_variables, _variable_names, variable_hashmap) =
             create_variables(problem.variables);
-        let expression = create_expression(&problem.objective.expression, &variable_hashmap);
-        println!("Expression {:?}", expression);
-        let string_expression = format!("{:?}", expression);
 
+        let parsed_expression = parse_objective_expression(&problem.objective.expression);
+        let expression = create_expression(&parsed_expression, &variable_hashmap);
+        let string_expression = format!("{:?}", expression);
         println!("String expression {:?}", &string_expression.clone());
 
         // a+2-b+3

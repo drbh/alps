@@ -24,10 +24,8 @@ pub struct Objective {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Constraint {
-    pub expr: String,
-    pub r#type: String,
-    pub lhs: String,
-    pub rhs: String,
+    pub name: String,
+    pub f: String,
 }
 
 pub fn tokenize(input_str: &String) -> Vec<InfixToken> {
