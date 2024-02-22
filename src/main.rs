@@ -120,7 +120,6 @@ fn create_constraints(
 ) -> Vec<constraint::Constraint> {
     let mut constraints = vec![];
     for constraint in problem_constraints {
-
         let f = constraint.f.clone();
 
         let inequalities = vec!["<=", ">=", "==", "<", ">"];
@@ -204,45 +203,38 @@ fn parse_objective_expression(objective: &String) -> String {
 // subject to doughnut_min: doughnuts >= 14;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let json_problem = r#"
-{
-    "variables": {
-      "a": {
-        "max": 1000000
+    let json_problem = r#"{
+      "variables": {
+        "bagels": {},
+        "doughnuts": {}
       },
-      "b": {
-        "min": 2, 
-        "max": 10000
-      }
-    },
-    "objective": {
-      "goal": "max",
-      "expression": "( 3 * a ) + ( 1.25 * b )"
-    },
-    "constraints": [
-      {
-        "name": "flour",
-        "f": "12 * a + 6.5 * b <= 400"
+      "objective": {
+        "goal": "max",
+        "expression": "( 3 * bagels ) + ( 1.25 * doughnuts )"
       },
-      {
-        "name": "milk",
-        "f": "1 * a + 0.5 * b <= 200"
-      },
-      {
-        "name": "sugar",
-        "f": "2 * a + 0.25 * b <= 200"
-      },
-      {
-        "name": "bagel_min",
-        "f": "a >= 12"
-      },
-      {
-        "name": "doughnut_min",
-        "f": "b >= 14"
-      }
-    ]
-  }
-"#;
+      "constraints": [
+        {
+          "name": "flour",
+          "f": "12 * bagels + 6.5 * doughnuts <= 400"
+        },
+        {
+          "name": "milk",
+          "f": "1 * bagels + 0.5 * doughnuts <= 200"
+        },
+        {
+          "name": "sugar",
+          "f": "2 * bagels + 0.25 * doughnuts <= 200"
+        },
+        {
+          "name": "bagel_min",
+          "f": "bagels >= 12"
+        },
+        {
+          "name": "doughnut_min",
+          "f": "doughnuts >= 14"
+        }
+      ]
+    }"#;
 
     let problem: UnoptimizedProblem = serde_json::from_str(json_problem)?;
     // println!("{:#?}", problem);
