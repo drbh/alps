@@ -29,10 +29,10 @@ pub struct Objective {
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Constraint {
     pub name: String,
-    pub f: String,
+    pub expression: String,
 }
 
-pub fn tokenize(input_str: &String) -> Vec<InfixToken> {
+pub fn tokenize(input_str: &str) -> Vec<InfixToken> {
     let mut tokens: Vec<InfixToken> = Vec::new();
     for ele in input_str.split_whitespace() {
         if ele == "+" {
@@ -377,7 +377,7 @@ pub fn create_constraints(
 ) -> Vec<constraint::Constraint> {
     let mut constraints = vec![];
     for constraint in problem_constraints {
-        let f = constraint.f.clone();
+        let f = constraint.expression.clone();
 
         let inequalities = ["<=", ">=", "==", "<", ">"];
 
@@ -399,8 +399,8 @@ pub fn create_constraints(
         let lhs = split[0].trim();
         let rhs = split[1].trim();
 
-        let lhs_postfix = tokenize(&lhs.to_string());
-        let rhs_postfix = tokenize(&rhs.to_string());
+        let lhs_postfix = tokenize(lhs);
+        let rhs_postfix = tokenize(rhs);
 
         let lhs_expression = infix_to_postfix(&lhs_postfix).unwrap();
         let rhs_expression = infix_to_postfix(&rhs_postfix).unwrap();
@@ -437,8 +437,7 @@ pub fn create_constraints(
     constraints
 }
 
-pub fn parse_objective_expression(objective: &String) -> String {
-    // let input_str = "( ( 3 * a ) + b ) * 3".to_string(); // 3 a * b + 3 *
+pub fn parse_objective_expression(objective: &str) -> String {
     let original_tokens = tokenize(objective);
     let result = infix_to_postfix(&original_tokens).unwrap();
     let postfix_string = result

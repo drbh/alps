@@ -10,23 +10,23 @@
   "constraints": [
     {
       "name": "flour",
-      "f": "12 * bagels + 6.5 * doughnuts <= 400"
+      "expression": "12 * bagels + 6.5 * doughnuts <= 400"
     },
     {
       "name": "milk",
-      "f": "1 * bagels + 0.5 * doughnuts <= 200"
+      "expression": "1 * bagels + 0.5 * doughnuts <= 200"
     },
     {
       "name": "sugar",
-      "f": "2 * bagels + 0.25 * doughnuts <= 200"
+      "expression": "2 * bagels + 0.25 * doughnuts <= 200"
     },
     {
       "name": "bagel_min",
-      "f": "bagels >= 12"
+      "expression": "bagels >= 12"
     },
     {
       "name": "doughnut_min",
-      "f": "doughnuts >= 14"
+      "expression": "doughnuts >= 14"
     }
   ]
 }
