@@ -1,9 +1,11 @@
 use good_lp::IntoAffineExpression;
 use good_lp::{constraint, Expression, Variable as GoodVariable};
+use good_lp::{default_solver, Solution, SolverModel};
 use good_lp::{ProblemVariables, VariableDefinition};
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 use std::collections::HashMap;
+use std::error::Error;
 use std::ops::Div;
 use std::ops::Mul;
 
@@ -12,6 +14,13 @@ pub struct UnoptimizedProblem {
     pub variables: HashMap<String, Variable>,
     pub objective: Objective,
     pub constraints: Vec<Constraint>,
+}
+
+// UnoptimizedProblem: From<&str>
+impl From<&str> for UnoptimizedProblem {
+    fn from(s: &str) -> Self {
+        serde_json::from_str(s).unwrap()
+    }
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -446,4 +455,26 @@ pub fn parse_objective_expression(objective: &str) -> String {
         .collect::<Vec<String>>()
         .join(" ");
     postfix_string
+}
+
+pub fn solve(problem: UnoptimizedProblem) -> Result<String, Box<dyn Error>> {
+    // let problem: UnoptimizedProblem = serde_json::from_str(&json_problem).unwrap();
+    let (problem_variables, _variable_names, variable_hashmap) = create_variables(problem.variables);
+    let parsed_expression = parse_objective_expression(&problem.objective.expression);
+    let expression = create_expression(&parsed_expression, &variable_hashmap);
+    let constraints = create_constraints(&problem.constraints, &variable_hashmap);
+    let mut solution = problem_variables.maximise(expression).using(default_solver);
+    for constraint in constraints {
+        solution = solution.with(constraint);
+    }
+    let solution = solution.solve().unwrap();
+    let mut values = vec![];
+    for var in variable_hashmap.keys() {
+        let value = variable_hashmap.get(var);
+        let v = solution.value(*value.unwrap());
+        values.push((var.clone(), v));
+    }
+    let sol = solution.into_inner();
+    let response = format!("{:#?}", sol);
+    Ok(response)
 }

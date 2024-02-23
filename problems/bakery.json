@@ -5,7 +5,7 @@
   },
   "objective": {
     "goal": "max",
-    "expression": "( 4 * bagels ) + ( 1.25 * doughnuts )"
+    "expression": "( 3 * bagels ) + ( 1.25 * doughnuts )"
   },
   "constraints": [
     {
