@@ -1,0 +1,32 @@
+{
+  "variables": {
+    "short_haul_flights": {},
+    "long_haul_flights": {}
+  },
+  "objective": {
+    "goal": "max",
+    "expression": "( 3000 * short_haul_flights ) + ( 15000 * long_haul_flights )"
+  },
+  "constraints": [
+    {
+      "name": "fuel",
+      "expression": "5000 * short_haul_flights + 25000 * long_haul_flights <= 1000000"
+    },
+    {
+      "name": "crew",
+      "expression": "3 * short_haul_flights + 5 * long_haul_flights <= 100"
+    },
+    {
+      "name": "maintenance",
+      "expression": "2 * short_haul_flights + 10 * long_haul_flights <= 500"
+    },
+    {
+      "name": "short_haul_min",
+      "expression": "short_haul_flights >= 10"
+    },
+    {
+      "name": "long_haul_min",
+      "expression": "long_haul_flights >= 5"
+    }
+  ]
+}

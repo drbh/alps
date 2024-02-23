@@ -1,0 +1,32 @@
+{
+  "variables": {
+    "tennis_rackets": {},
+    "golf_clubs": {}
+  },
+  "objective": {
+    "goal": "max",
+    "expression": "( 30 * tennis_rackets ) + ( 45 * golf_clubs )"
+  },
+  "constraints": [
+    {
+      "name": "aluminum",
+      "expression": "0.5 * tennis_rackets + 1.2 * golf_clubs <= 800"
+    },
+    {
+      "name": "rubber",
+      "expression": "0.2 * tennis_rackets + 0.1 * golf_clubs <= 100"
+    },
+    {
+      "name": "labor_hours",
+      "expression": "1 * tennis_rackets + 2 * golf_clubs <= 1500"
+    },
+    {
+      "name": "tennis_rackets_min",
+      "expression": "tennis_rackets >= 100"
+    },
+    {
+      "name": "golf_clubs_min",
+      "expression": "golf_clubs >= 50"
+    }
+  ]
+}

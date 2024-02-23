@@ -1,0 +1,32 @@
+{
+  "variables": {
+    "tech_watches": {},
+    "VR_headsets": {}
+  },
+  "objective": {
+    "goal": "max",
+    "expression": "( 45 * tech_watches ) + ( 60 * VR_headsets )"
+  },
+  "constraints": [
+    {
+      "name": "circuit_boards",
+      "expression": "3 * tech_watches + 2 * VR_headsets <= 600"
+    },
+    {
+      "name": "batteries",
+      "expression": "1 * tech_watches + 1 * VR_headsets <= 220"
+    },
+    {
+      "name": "plastic_material",
+      "expression": "0.5 * tech_watches + 1.2 * VR_headsets <= 300"
+    },
+    {
+      "name": "tech_watch_min",
+      "expression": "tech_watches >= 50"
+    },
+    {
+      "name": "VR_headset_min",
+      "expression": "VR_headsets >= 30"
+    }
+  ]
+}

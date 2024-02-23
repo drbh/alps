@@ -1,0 +1,32 @@
+{
+  "variables": {
+    "wheat": {},
+    "corn": {}
+  },
+  "objective": {
+    "goal": "max",
+    "expression": "( 200 * wheat ) + ( 300 * corn )"
+  },
+  "constraints": [
+    {
+      "name": "water",
+      "expression": "1000 * wheat + 800 * corn <= 100000"
+    },
+    {
+      "name": "fertilizer",
+      "expression": "50 * wheat + 70 * corn <= 500000"
+    },
+    {
+      "name": "labor",
+      "expression": "10 * wheat + 15 * corn <= 200000"
+    },
+    {
+      "name": "wheat_min",
+      "expression": "wheat >= 20"
+    },
+    {
+      "name": "corn_min",
+      "expression": "corn >= 10"
+    }
+  ]
+}

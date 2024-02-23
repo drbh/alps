@@ -1,0 +1,28 @@
+{
+  "variables": {
+    "paperback": {},
+    "ebook": {}
+  },
+  "objective": {
+    "goal": "max",
+    "expression": "( 7 * paperback ) + ( 10 * ebook )"
+  },
+  "constraints": [
+    {
+      "name": "production_time",
+      "expression": "2 * paperback + 0.5 * ebook <= 1000"
+    },
+    {
+      "name": "material_cost",
+      "expression": "3 * paperback + 0.2 * ebook <= 2000"
+    },
+    {
+      "name": "paperback_min",
+      "expression": "paperback >= 100"
+    },
+    {
+      "name": "ebook_min",
+      "expression": "ebook >= 200"
+    }
+  ]
+}
