@@ -491,7 +491,8 @@ pub fn solve(problem: UnoptimizedProblem) -> Result<SolutionResponse, Box<dyn Er
         let rhs_solution_value = rhs.into_expression().eval_with(&values.clone());
         let constr = problem.constraints[index].clone();
         const_values.push(ConstraintSolution {
-            constraint: constr,
+            name: constr.name,
+            expression: constr.expression,
             lhs: lhs_solution_value,
             rhs: rhs_solution_value,
         })
@@ -516,7 +517,8 @@ pub fn solve(problem: UnoptimizedProblem) -> Result<SolutionResponse, Box<dyn Er
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct ConstraintSolution {
-    pub constraint: Constraint,
+    pub name: String,
+    pub expression: String,
     pub lhs: f64,
     pub rhs: f64,
 }
