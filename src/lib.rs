@@ -408,8 +408,11 @@ pub fn create_constraints(
         let lhs = split[0].trim();
         let rhs = split[1].trim();
 
-        let lhs_postfix = tokenize(lhs);
-        let rhs_postfix = tokenize(rhs);
+        let lhs = add_spaces(lhs);
+        let rhs = add_spaces(rhs);
+
+        let lhs_postfix = tokenize(&lhs);
+        let rhs_postfix = tokenize(&rhs);
 
         let lhs_expression = infix_to_postfix(&lhs_postfix).unwrap();
         let rhs_expression = infix_to_postfix(&rhs_postfix).unwrap();
@@ -447,7 +450,8 @@ pub fn create_constraints(
 }
 
 pub fn parse_objective_expression(objective: &str) -> String {
-    let original_tokens = tokenize(objective);
+    let objective = add_spaces(objective);
+    let original_tokens = tokenize(&objective);
     let result = infix_to_postfix(&original_tokens).unwrap();
     let postfix_string = result
         .iter()
@@ -458,7 +462,6 @@ pub fn parse_objective_expression(objective: &str) -> String {
 }
 
 pub fn solve(problem: UnoptimizedProblem) -> Result<SolutionResponse, Box<dyn Error>> {
-    // let problem: UnoptimizedProblem = serde_json::from_str(&json_problem).unwrap();
     let (problem_variables, _variable_names, variable_hashmap) =
         create_variables(problem.variables);
     let parsed_expression = parse_objective_expression(&problem.objective.expression);
@@ -487,7 +490,17 @@ pub fn solve(problem: UnoptimizedProblem) -> Result<SolutionResponse, Box<dyn Er
         let lhs_solution_value = lhs.into_expression().eval_with(&values.clone());
         let rhs_solution_value = rhs.into_expression().eval_with(&values.clone());
         let constr = problem.constraints[index].clone();
-        const_values.push((constr, lhs_solution_value, rhs_solution_value));
+        const_values.push(ConstraintSolution {
+            constraint: constr,
+            lhs: lhs_solution_value,
+            rhs: rhs_solution_value,
+        })
+    }
+
+    let mut variable_solutions = HashMap::new();
+    for (index, (_var, val)) in sol.iter().enumerate() {
+        let varname = _variable_names[index].clone();
+        variable_solutions.insert(varname, *val);
     }
 
     let num_constraints = const_values.len();
@@ -495,14 +508,78 @@ pub fn solve(problem: UnoptimizedProblem) -> Result<SolutionResponse, Box<dyn Er
         const_values: const_values,
         objective: sol.objective(),
         num_constraints,
+        variable_solutions,
     };
 
     Ok(serializable_solution)
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct ConstraintSolution {
+    pub constraint: Constraint,
+    pub lhs: f64,
+    pub rhs: f64,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct SolutionResponse {
-    pub const_values: Vec<(Constraint, f64, f64)>,
+    pub const_values: Vec<ConstraintSolution>,
     pub objective: f64,
     pub num_constraints: usize,
+    pub variable_solutions: HashMap<String, f64>,
+}
+
+// add ToString
+impl ToString for SolutionResponse {
+    fn to_string(&self) -> String {
+        // use serde_json to convert the struct to a string
+        let result = serde_json::to_string(&self).unwrap();
+        result
+    }
+}
+
+
+fn add_spaces(input: &str) -> String {
+    let mut result = String::new();
+    let mut chars = input.chars().peekable();
+
+    while let Some(c) = chars.next() {
+        match c {
+            // Handle numeric and decimal parts
+            '0'..='9' | '.' => {
+                result.push(c);
+            },
+            // Check for operators
+            '+' | '*' | '<' | '=' | '>' | '-' | '(' | ')' => {
+                if !result.ends_with(' ') {
+                    result.push(' ');
+                }
+
+                result.push(c);
+
+                // Peek next character to handle <=, >=, ==, and !=
+                if let Some(&next) = chars.peek() {
+                    match (c, next) {
+                        ('<', '=') | ('>', '=') | ('=', '=') => {
+                            chars.next(); // Consume the next character
+                            result.push(next);
+                        },
+                        _ => (),
+                    }
+                }
+
+                if !result.ends_with(' ') {
+                    result.push(' ');
+                }
+            },
+            // Handle all other characters
+            _ => {
+                if !result.ends_with(' ') || c != ' ' {
+                    result.push(c);
+                }
+            }
+        }
+    }
+
+    result.trim().to_string() // Trim any leading or trailing spaces
 }
