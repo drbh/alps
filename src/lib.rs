@@ -383,7 +383,7 @@ pub fn create_expression(
 pub fn create_constraints(
     problem_constraints: &Vec<Constraint>,
     variable_hashmap: &HashMap<String, GoodVariable>,
-) -> Vec<constraint::Constraint> {
+) -> Vec<(constraint::Constraint, Expression, Expression)> {
     let mut constraints = vec![];
     for constraint in problem_constraints {
         let f = constraint.expression.clone();
@@ -434,14 +434,14 @@ pub fn create_constraints(
 
         // use the my_inequality to create the constraint
         let constraint = match *my_inequality {
-            "<=" => good_lp::constraint!(lhs_expression <= rhs_expression),
-            ">=" => good_lp::constraint!(lhs_expression >= rhs_expression),
-            "==" => good_lp::constraint!(lhs_expression == rhs_expression),
+            "<=" => good_lp::constraint!(lhs_expression.clone() <= rhs_expression.clone()),
+            ">=" => good_lp::constraint!(lhs_expression.clone() >= rhs_expression.clone()),
+            "==" => good_lp::constraint!(lhs_expression.clone() == rhs_expression.clone()),
             // throw an error if the inequality is not supported
             _ => panic!("Unsupported inequality"),
         };
 
-        constraints.push(constraint);
+        constraints.push((constraint, lhs_expression, rhs_expression));
     }
     constraints
 }
@@ -457,24 +457,52 @@ pub fn parse_objective_expression(objective: &str) -> String {
     postfix_string
 }
 
-pub fn solve(problem: UnoptimizedProblem) -> Result<String, Box<dyn Error>> {
+pub fn solve(problem: UnoptimizedProblem) -> Result<SolutionResponse, Box<dyn Error>> {
     // let problem: UnoptimizedProblem = serde_json::from_str(&json_problem).unwrap();
-    let (problem_variables, _variable_names, variable_hashmap) = create_variables(problem.variables);
+    let (problem_variables, _variable_names, variable_hashmap) =
+        create_variables(problem.variables);
     let parsed_expression = parse_objective_expression(&problem.objective.expression);
     let expression = create_expression(&parsed_expression, &variable_hashmap);
     let constraints = create_constraints(&problem.constraints, &variable_hashmap);
     let mut solution = problem_variables.maximise(expression).using(default_solver);
+
+    let mut exprs = vec![];
     for constraint in constraints {
-        solution = solution.with(constraint);
+        let (c, lhs, rhs) = constraint;
+        solution = solution.with(c);
+        exprs.push((lhs, rhs));
     }
     let solution = solution.solve().unwrap();
-    let mut values = vec![];
+
+    let mut values = HashMap::new();
     for var in variable_hashmap.keys() {
-        let value = variable_hashmap.get(var);
-        let v = solution.value(*value.unwrap());
-        values.push((var.clone(), v));
+        let value = variable_hashmap.get(var).unwrap();
+        let v = solution.value(*value);
+        values.insert(*value, v);
     }
+
     let sol = solution.into_inner();
-    let response = format!("{:#?}", sol);
-    Ok(response)
+    let mut const_values = vec![];
+    for (index, (lhs, rhs)) in exprs.iter().enumerate() {
+        let lhs_solution_value = lhs.into_expression().eval_with(&values.clone());
+        let rhs_solution_value = rhs.into_expression().eval_with(&values.clone());
+        let constr = problem.constraints[index].clone();
+        const_values.push((constr, lhs_solution_value, rhs_solution_value));
+    }
+
+    let num_constraints = const_values.len();
+    let serializable_solution = SolutionResponse {
+        const_values: const_values,
+        objective: sol.objective(),
+        num_constraints,
+    };
+
+    Ok(serializable_solution)
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct SolutionResponse {
+    pub const_values: Vec<(Constraint, f64, f64)>,
+    pub objective: f64,
+    pub num_constraints: usize,
 }

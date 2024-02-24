@@ -23,6 +23,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let problem: UnoptimizedProblem = serde_json::from_str(&json_problem).unwrap();
 
     let solution = solve(problem).unwrap();
+
+    let solution = serde_json::to_string(&solution).unwrap();
     println!("{}", solution);
 
     Ok(())
