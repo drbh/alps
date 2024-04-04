@@ -506,7 +506,7 @@ pub fn solve(problem: UnoptimizedProblem) -> Result<SolutionResponse, Box<dyn Er
 
     let num_constraints = const_values.len();
     let serializable_solution = SolutionResponse {
-        const_values: const_values,
+        const_values,
         objective: sol.objective(),
         num_constraints,
         variable_solutions,
@@ -535,8 +535,8 @@ pub struct SolutionResponse {
 impl ToString for SolutionResponse {
     fn to_string(&self) -> String {
         // use serde_json to convert the struct to a string
-        let result = serde_json::to_string(&self).unwrap();
-        result
+        
+        serde_json::to_string(&self).unwrap()
     }
 }
 
