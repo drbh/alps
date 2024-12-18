@@ -1,0 +1,187 @@
+{
+  "variables": {
+    "assign_A_GPU:0": {
+      "name": "assign_A_GPU:0",
+      "min": 0,
+      "max": 1
+    },
+    "assign_A_GPU:1": {
+      "name": "assign_A_GPU:1",
+      "min": 0,
+      "max": 1
+    },
+    "assign_A_GPU:2": {
+      "name": "assign_A_GPU:2",
+      "min": 0,
+      "max": 1
+    },
+    "assign_A_GPU:3": {
+      "name": "assign_A_GPU:3",
+      "min": 0,
+      "max": 1
+    },
+    "assign_B_GPU:0": {
+      "name": "assign_B_GPU:0",
+      "min": 0,
+      "max": 1
+    },
+    "assign_B_GPU:1": {
+      "name": "assign_B_GPU:1",
+      "min": 0,
+      "max": 1
+    },
+    "assign_B_GPU:2": {
+      "name": "assign_B_GPU:2",
+      "min": 0,
+      "max": 1
+    },
+    "assign_B_GPU:3": {
+      "name": "assign_B_GPU:3",
+      "min": 0,
+      "max": 1
+    },
+    "start_time_A": {
+      "name": "start_time_A",
+      "min": 0,
+      "max": 1000000
+    },
+    "start_time_B": {
+      "name": "start_time_B",
+      "min": 0,
+      "max": 1000000
+    },
+    "start_time_compute": {
+      "name": "start_time_compute",
+      "min": 0,
+      "max": 1000000
+    },
+    "end_time_A": {
+      "name": "end_time_A",
+      "min": 0,
+      "max": 1000000
+    },
+    "end_time_B": {
+      "name": "end_time_B",
+      "min": 0,
+      "max": 1000000
+    }
+  },
+  "objective": {
+    "goal": "min",
+    "expression": "start_time_compute"
+  },
+  "constraints": [
+    {
+      "name": "assign_op_A",
+      "expression": "assign_A_GPU:0 + assign_A_GPU:1 + assign_A_GPU:2 + assign_A_GPU:3 == 1"
+    },
+    {
+      "name": "assign_op_B",
+      "expression": "assign_B_GPU:0 + assign_B_GPU:1 + assign_B_GPU:2 + assign_B_GPU:3 == 1"
+    },
+    {
+      "name": "end_time_A_GPU:0_lower",
+      "expression": "end_time_A >= start_time_A + 1000000 - 1000000 * (1 - assign_A_GPU:0)"
+    },
+    {
+      "name": "end_time_A_GPU:0_upper",
+      "expression": "end_time_A <= start_time_A + 1000000 + 1000000 * (1 - assign_A_GPU:0)"
+    },
+    {
+      "name": "end_time_A_GPU:1_lower",
+      "expression": "end_time_A >= start_time_A + 1000000 - 1000000 * (1 - assign_A_GPU:1)"
+    },
+    {
+      "name": "end_time_A_GPU:1_upper",
+      "expression": "end_time_A <= start_time_A + 1000000 + 1000000 * (1 - assign_A_GPU:1)"
+    },
+    {
+      "name": "end_time_A_GPU:2_lower",
+      "expression": "end_time_A >= start_time_A + 1000000 - 1000000 * (1 - assign_A_GPU:2)"
+    },
+    {
+      "name": "end_time_A_GPU:2_upper",
+      "expression": "end_time_A <= start_time_A + 1000000 + 1000000 * (1 - assign_A_GPU:2)"
+    },
+    {
+      "name": "end_time_A_GPU:3_lower",
+      "expression": "end_time_A >= start_time_A + 500000 - 1000000 * (1 - assign_A_GPU:3)"
+    },
+    {
+      "name": "end_time_A_GPU:3_upper",
+      "expression": "end_time_A <= start_time_A + 500000 + 1000000 * (1 - assign_A_GPU:3)"
+    },
+    {
+      "name": "end_time_B_GPU:0_lower",
+      "expression": "end_time_B >= start_time_B + 1000000 - 1000000 * (1 - assign_B_GPU:0)"
+    },
+    {
+      "name": "end_time_B_GPU:0_upper",
+      "expression": "end_time_B <= start_time_B + 1000000 + 1000000 * (1 - assign_B_GPU:0)"
+    },
+    {
+      "name": "end_time_B_GPU:1_lower",
+      "expression": "end_time_B >= start_time_B + 1000000 - 1000000 * (1 - assign_B_GPU:1)"
+    },
+    {
+      "name": "end_time_B_GPU:1_upper",
+      "expression": "end_time_B <= start_time_B + 1000000 + 1000000 * (1 - assign_B_GPU:1)"
+    },
+    {
+      "name": "end_time_B_GPU:2_lower",
+      "expression": "end_time_B >= start_time_B + 1000000 - 1000000 * (1 - assign_B_GPU:2)"
+    },
+    {
+      "name": "end_time_B_GPU:2_upper",
+      "expression": "end_time_B <= start_time_B + 1000000 + 1000000 * (1 - assign_B_GPU:2)"
+    },
+    {
+      "name": "end_time_B_GPU:3_lower",
+      "expression": "end_time_B >= start_time_B + 500000 - 1000000 * (1 - assign_B_GPU:3)"
+    },
+    {
+      "name": "end_time_B_GPU:3_upper",
+      "expression": "end_time_B <= start_time_B + 500000 + 1000000 * (1 - assign_B_GPU:3)"
+    },
+    {
+      "name": "dependency_A_compute",
+      "expression": "end_time_A + (assign_A_GPU:0 * 0.008) + (assign_A_GPU:1 * 0.008) + (assign_A_GPU:2 * 0.008) + (assign_A_GPU:3 * 0.008) <= start_time_compute"
+    },
+    {
+      "name": "dependency_B_compute",
+      "expression": "end_time_B + (assign_B_GPU:0 * 0.008) + (assign_B_GPU:1 * 0.008) + (assign_B_GPU:2 * 0.008) + (assign_B_GPU:3 * 0.008) <= start_time_compute"
+    },
+    {
+      "name": "non_overlap_A_B_GPU:0",
+      "expression": "end_time_A <= start_time_B + 1000000 * (2 - assign_A_GPU:0 - assign_B_GPU:0)"
+    },
+    {
+      "name": "non_overlap_B_A_GPU:0",
+      "expression": "end_time_B <= start_time_A + 1000000 * (2 - assign_A_GPU:0 - assign_B_GPU:0)"
+    },
+    {
+      "name": "non_overlap_A_B_GPU:1",
+      "expression": "end_time_A <= start_time_B + 1000000 * (2 - assign_A_GPU:1 - assign_B_GPU:1)"
+    },
+    {
+      "name": "non_overlap_B_A_GPU:1",
+      "expression": "end_time_B <= start_time_A + 1000000 * (2 - assign_A_GPU:1 - assign_B_GPU:1)"
+    },
+    {
+      "name": "non_overlap_A_B_GPU:2",
+      "expression": "end_time_A <= start_time_B + 1000000 * (2 - assign_A_GPU:2 - assign_B_GPU:2)"
+    },
+    {
+      "name": "non_overlap_B_A_GPU:2",
+      "expression": "end_time_B <= start_time_A + 1000000 * (2 - assign_A_GPU:2 - assign_B_GPU:2)"
+    },
+    {
+      "name": "non_overlap_A_B_GPU:3",
+      "expression": "end_time_A <= start_time_B + 1000000 * (2 - assign_A_GPU:3 - assign_B_GPU:3)"
+    },
+    {
+      "name": "non_overlap_B_A_GPU:3",
+      "expression": "end_time_B <= start_time_A + 1000000 * (2 - assign_A_GPU:3 - assign_B_GPU:3)"
+    }
+  ]
+}

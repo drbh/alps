@@ -40,11 +40,7 @@ fn test_create_expression_simple() {
     let parsed_expression = parse_objective_expression(&problem.objective.expression);
     let expression = create_expression(&parsed_expression, &variable_hashmap);
     let string_expression = format!("{:?}", expression);
-    let acceptable_expressions = vec![
-        //
-        "v1 + -1 v0 + 10".to_string(),
-        "-1 v1 + v0 + 10".to_string(),
-    ];
+    let acceptable_expressions = ["v1 + -1 v0 + 10".to_string(), "-1 v1 + v0 + 10".to_string()];
 
     let matched = acceptable_expressions
         .iter()
@@ -120,7 +116,7 @@ fn test_create_constraint_simple() {
     assert!(matches.iter().any(|x| x == &true));
 
     // must match one of the acceptable expressions
-    let acceptable_expressions = vec![
+    let acceptable_expressions = [
         "-1 v1 + v0 + 5".to_string(),
         "v1 + -1 v0 + 5".to_string(),
         "-1 v1 + v0 + 5".to_string(),
@@ -168,7 +164,7 @@ fn test_create_expression() {
     // a+2-b+3
 
     // must match one of the acceptable expressions
-    let acceptable_expressions = vec![
+    let acceptable_expressions = [
         "v1 + -1 v0 + 5".to_string(),
         "v0 + -1 v1 + 5".to_string(),
         "-1 v1 + v0 + 5".to_string(),

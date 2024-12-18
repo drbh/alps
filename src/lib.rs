@@ -25,6 +25,7 @@ impl From<&str> for UnoptimizedProblem {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Variable {
+    pub name: String,
     pub max: Option<i64>,
     pub min: Option<i64>,
 }
@@ -292,7 +293,8 @@ pub fn create_variables(
         let mut variable_definition = VariableDefinition::new();
         if let Some(min) = variable.min {
             variable_definition = variable_definition.min(min as f64);
-        } else if let Some(max) = variable.max {
+        }
+        if let Some(max) = variable.max {
             variable_definition = variable_definition.max(max as f64);
         }
         problem_variables.add(variable_definition);
@@ -535,11 +537,10 @@ pub struct SolutionResponse {
 impl ToString for SolutionResponse {
     fn to_string(&self) -> String {
         // use serde_json to convert the struct to a string
-        
+
         serde_json::to_string(&self).unwrap()
     }
 }
-
 
 fn add_spaces(input: &str) -> String {
     let mut result = String::new();
@@ -550,7 +551,7 @@ fn add_spaces(input: &str) -> String {
             // Handle numeric and decimal parts
             '0'..='9' | '.' => {
                 result.push(c);
-            },
+            }
             // Check for operators
             '+' | '*' | '<' | '=' | '>' | '-' | '(' | ')' => {
                 if !result.ends_with(' ') {
@@ -565,7 +566,7 @@ fn add_spaces(input: &str) -> String {
                         ('<', '=') | ('>', '=') | ('=', '=') => {
                             chars.next(); // Consume the next character
                             result.push(next);
-                        },
+                        }
                         _ => (),
                     }
                 }
@@ -573,7 +574,7 @@ fn add_spaces(input: &str) -> String {
                 if !result.ends_with(' ') {
                     result.push(' ');
                 }
-            },
+            }
             // Handle all other characters
             _ => {
                 if !result.ends_with(' ') || c != ' ' {
